@@ -1,0 +1,61 @@
+<div style="padding: 20px;">
+  <h2>Gestion des parcelles</h2>
+
+  <div style="display: flex; gap: 20px;">
+    <div style="flex: 0 0 250px;">
+      <h3>Sélectionner une parcelle</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button *ngFor="let parcelle of parcelles"
+                (click)="selectParcelle(parcelle)"
+                [style.background]="selectedParcelle.id === parcelle.id ? '#007bff' : '#e9ecef'"
+                [style.color]="selectedParcelle.id === parcelle.id ? 'white' : 'black'"
+                style="padding: 10px; border: none; border-radius: 5px; cursor: pointer; text-align: left;">
+          {{ parcelle.nom }}
+        </button>
+      </div>
+    </div>
+
+    <div style="flex: 1;">
+      <h3>{{ selectedParcelle.nom }}</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0;">
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 5px;">
+          <p style="margin: 0; color: #666; font-size: 12px;">SURFACE</p>
+          <h4 style="margin: 5px 0;">{{ selectedParcelle.surface }} ha</h4>
+        </div>
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 5px;">
+          <p style="margin: 0; color: #666; font-size: 12px;">CAPTEURS</p>
+          <h4 style="margin: 5px 0;">{{ selectedParcelle.capteurs }}</h4>
+        </div>
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 5px;">
+          <p style="margin: 0; color: #666; font-size: 12px;">LOCALISATION</p>
+          <h4 style="margin: 5px 0;">{{ selectedParcelle.localisation }}</h4>
+        </div>
+        <div style="background: #d1ecf1; padding: 15px; border-radius: 5px;">
+          <p style="margin: 0; color: #0c5460; font-size: 12px;">STATUT</p>
+          <h4 style="margin: 5px 0; color: #0c5460;">Actif</h4>
+        </div>
+      </div>
+
+      <h4 style="margin-top: 30px;">Capteurs</h4>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+        <thead>
+          <tr style="background: #f0f0f0; border-bottom: 2px solid #ddd;">
+            <th style="padding: 10px; text-align: left;">Nom</th>
+            <th style="padding: 10px; text-align: left;">Type</th>
+            <th style="padding: 10px; text-align: left;">Valeur</th>
+            <th style="padding: 10px; text-align: left;">Dernière mise à jour</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let capteur of capteurs" style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 10px;">{{ capteur.nom }}</td>
+            <td style="padding: 10px;">{{ capteur.type }}</td>
+            <td style="padding: 10px;">{{ capteur.valeur }} {{ capteur.unite }}</td>
+            <td style="padding: 10px;">{{ capteur.lastUpdate | date:'short' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
