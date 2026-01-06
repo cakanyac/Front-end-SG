@@ -1,11 +1,15 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface Parcelle {
-  id: number;
+  id: string;
   nom: string;
-  surface: number;
-  capteurs: number;
-  localisation: string;
+  superficie: number;
+  culture: string;
+  type_sol: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface Capteur {
@@ -38,71 +42,81 @@ export interface DashboardStats {
   providedIn: 'root'
 })
 export class DataService {
-  
-  // Mock Data - Parcelles
-  private mockParcelles: Parcelle[] = [
-    { id: 1, nom: 'Parcelle A - Blé', surface: 2.5, capteurs: 5, localisation: 'Normandie' },
-    { id: 2, nom: 'Parcelle B - Maïs', surface: 3.0, capteurs: 8, localisation: 'Île-de-France' },
-    { id: 3, nom: 'Parcelle C - Orge', surface: 1.8, capteurs: 3, localisation: 'Hauts-de-France' },
-    { id: 4, nom: 'Parcelle D - Soja', surface: 2.2, capteurs: 6, localisation: 'Bourgogne' },
-  ];
+  private apiUrl = 'http://localhost:8080/api/v1';
 
-  // Mock Data - Capteurs
-  private mockCapteurs: Capteur[] = [
-    { id: 1, nom: 'Capteur Humidité 1', type: 'Humidité', valeur: 65, unite: '%', lastUpdate: new Date() },
-    { id: 2, nom: 'Capteur Température 1', type: 'Température', valeur: 18.5, unite: '°C', lastUpdate: new Date() },
-    { id: 3, nom: 'Capteur Lumière 1', type: 'Luminosité', valeur: 850, unite: 'lux', lastUpdate: new Date() },
-    { id: 4, nom: 'Capteur pH 1', type: 'pH', valeur: 7.2, unite: 'pH', lastUpdate: new Date() },
-    { id: 5, nom: 'Capteur Azote 1', type: 'Nitrogène', valeur: 120, unite: 'mg/L', lastUpdate: new Date() },
-  ];
+  constructor(private http: HttpClient) {}
 
-  // Mock Data - Robots
-  private mockRobots: Robot[] = [
-    { id: 1, nom: 'Robot Scout 1', statut: 'actif', batterie: 85, localisation: 'Parcelle A' },
-    { id: 2, nom: 'Robot Scout 2', statut: 'en_mission', batterie: 45, localisation: 'Parcelle B' },
-    { id: 3, nom: 'Robot Agricole 1', statut: 'inactif', batterie: 20, localisation: 'Base' },
-  ];
-
-  getDashboardStats(): DashboardStats {
-    return {
-      parcelles: this.mockParcelles.length,
-      capteurs: this.mockCapteurs.length * 4,
-      robots: this.mockRobots.length,
-      alertes: 3,
-      missionsEnCours: 2,
-      capteursDysfonctionne: 1,
-    };
+  // PARCELLES
+  getParcelles(): Observable<Parcelle[]> {
+    return this.http.get<Parcelle[]>(`${this.apiUrl}/parcelles`);
   }
 
-  getParcelles(): Parcelle[] {
-    return this.mockParcelles;
+  getParcelleById(id: string): Observable<Parcelle> {
+    return this.http.get<Parcelle>(`${this.apiUrl}/parcelles/${id}`);
   }
 
-  getParcelleById(id: number): Parcelle | undefined {
-    return this.mockParcelles.find(p => p.id === id);
+  createParcelle(parcelle: Omit<Parcelle, 'id'>): Observable<Parcelle> {
+    return this.http.post<Parcelle>(`${this.apiUrl}/parcelles`, parcelle);
   }
 
-  getCapteurs(): Capteur[] {
-    return this.mockCapteurs;
+  updateParcelle(id: string, parcelle: Partial<Parcelle>): Observable<Parcelle> {
+    return this.http.put<Parcelle>(`${this.apiUrl}/parcelles/${id}`, parcelle);
   }
 
-  getCapteursByParcelleId(parcelleId: number): Capteur[] {
-    // Simulation : retourner les capteurs liés à une parcelle
-    return this.mockCapteurs.slice(0, this.mockParcelles.find(p => p.id === parcelleId)?.capteurs || 3);
+  deleteParcelle(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/parcelles/${id}`);
   }
 
-  getRobots(): Robot[] {
-    return this.mockRobots;
+  // CAPTEURS
+  getCapteurs(): Observable<Capteur[]> {
+    return this.http.get<Capteur[]>(`${this.apiUrl}/capteurs`);
   }
 
-  getRobotById(id: number): Robot | undefined {
-    return this.mockRobots.find(r => r.id === id);
+  getCapteursByParcelleId(parcelleId: string): Observable<Capteur[]> {
+    return this.http.get<Capteur[]>(`${this.apiUrl}/parcelles/${parcelleId}/capteurs`);
   }
 
-  updateRobotStatus(robotId: number, statut: 'actif' | 'inactif' | 'en_mission'): void {
-    const robot = this.mockRobots.find(r => r.id === robotId);
-    if (robot) {
-      robot.statut = statut;
-    }
+  createCapteur(capteur: Omit<Capteur, 'id'>): Observable<Capteur> {
+    return this.http.post<Capteur>(`${this.apiUrl}/capteurs`, capteur);
+  }
+
+  updateCapteur(id: number, capteur: Partial<Capteur>): Observable<Capteur> {
+    return this.http.put<Capteur>(`${this.apiUrl}/capteurs/${id}`, capteur);
+  }
+
+  deleteCapteur(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/capteurs/${id}`);
+  }
+
+  // ROBOTS
+  getRobots(): Observable<Robot[]> {
+    return this.http.get<Robot[]>(`${this.apiUrl}/robots`);
+  }
+
+  getRobotById(id: number): Observable<Robot> {
+    return this.http.get<Robot>(`${this.apiUrl}/robots/${id}`);
+  }
+
+  createRobot(robot: Omit<Robot, 'id'>): Observable<Robot> {
+    return this.http.post<Robot>(`${this.apiUrl}/robots`, robot);
+  }
+
+  updateRobot(id: number, robot: Partial<Robot>): Observable<Robot> {
+    return this.http.put<Robot>(`${this.apiUrl}/robots/${id}`, robot);
+  }
+
+  updateRobotStatus(id: number, statut: 'actif' | 'inactif' | 'en_mission', batterie?: number, localisation?: string): Observable<Robot> {
+    const body = { statut, batterie, localisation };
+    return this.http.put<Robot>(`${this.apiUrl}/robots/${id}/statut`, body);
+  }
+
+  deleteRobot(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/robots/${id}`);
+  }
+
+  // DASHBOARD - À DÉFINIR AVEC MAËL
+  // Pour l'instant, retourner les stats en comptant les entités
+  getDashboardStats(): Observable<DashboardStats> {
+    return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard/stats`);
   }
 }

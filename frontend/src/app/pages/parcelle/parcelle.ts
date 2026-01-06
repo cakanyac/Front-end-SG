@@ -1,32 +1,103 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DataService, Parcelle, Capteur } from '../../services/data.service';
 
 @Component({
   selector: 'app-parcelle',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './parcelle.html',
   styleUrl: './parcelle.css',
 })
 export class ParcelleComponent implements OnInit {
-  parcelles!: Parcelle[];
-  capteurs!: Capteur[];
-  selectedParcelle!: Parcelle;
+  parcelles: Parcelle[] = [];
+  capteurs: Capteur[] = [];
+  selectedParcelle: Parcelle | null = null;
+  loading = true;
+  showForm = false;
+  
+  formData = {
+    nom: '',
+    superficie: 0,
+    culture: '',
+    type_sol: '',
+    latitude: 0,
+    longitude: 0
+  };
 
   constructor(private dataService: DataService) {}
 
   ngOnInit(): void {
-    this.parcelles = this.dataService.getParcelles();
-    this.selectedParcelle = this.parcelles[0];
-    this.loadCapteurs();
+    console.log('ParcelleComponent initialized');
+    this.dataService.getParcelles().subscribe({
+      next: (parcelles) => {
+        console.log('Parcelles loaded:', parcelles);
+        this.parcelles = parcelles;
+        if (parcelles.length > 0) {
+          this.selectedParcelle = parcelles[0];
+          this.loadCapteurs();
+        }
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading parcelles:', err);
+        alert('Erreur API: ' + err.message);
+        this.loading = false;
+      }
+    });
   }
 
   selectParcelle(parcelle: Parcelle): void {
     this.selectedParcelle = parcelle;
     this.loadCapteurs();
+    this.showForm = false;
   }
 
   private loadCapteurs(): void {
-    this.capteurs = this.dataService.getCapteursByParcelleId(this.selectedParcelle.id);
+    if (!this.selectedParcelle) return;
+    
+    this.dataService.getCapteursByParcelleId(this.selectedParcelle.id).subscribe({
+      next: (capteurs) => {
+        this.capteurs = capteurs;
+      },
+      error: (err) => {
+        console.error('Error loading capteurs:', err);
+      }
+    });
+  }
+
+  openCreateForm(): void {
+    this.formData = { nom: '', superficie: 0, culture: '', type_sol: '', latitude: 0, longitude: 0 };
+    this.showForm = true;
+  }
+
+  createParcelle(): void {
+    if (!this.formData.nom || this.formData.superficie <= 0) {
+      alert('Veuillez remplir tous les champs correctement');
+      return;
+    }
+
+    this.dataService.createParcelle({
+      nom: this.formData.nom,
+      superficie: this.formData.superficie,
+      culture: this.formData.culture,
+      type_sol: this.formData.type_sol,
+      latitude: this.formData.latitude,
+      longitude: this.formData.longitude
+    }).subscribe({
+      next: (parcelle) => {
+        this.parcelles.push(parcelle);
+        this.showForm = false;
+        alert('Parcelle créée avec succès !');
+      },
+      error: (err) => {
+        console.error('Error creating parcelle:', err);
+        alert('Erreur lors de la création');
+      }
+    });
+  }
+
+  cancelForm(): void {
+    this.showForm = false;
   }
 }

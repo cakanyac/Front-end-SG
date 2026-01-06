@@ -9,13 +9,23 @@ import { DataService, Parcelle } from '../../services/data.service';
   styleUrl: './map.css',
 })
 export class MapComponent implements OnInit {
-  parcelles!: Parcelle[];
+  parcelles: Parcelle[] = [];
   selectedParcelle: Parcelle | null = null;
+  loading = true;
 
   constructor(private dataService: DataService) {}
 
   ngOnInit(): void {
-    this.parcelles = this.dataService.getParcelles();
+    this.dataService.getParcelles().subscribe({
+      next: (parcelles) => {
+        this.parcelles = parcelles;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading parcelles:', err);
+        this.loading = false;
+      }
+    });
   }
 
   selectParcelle(parcelle: Parcelle): void {

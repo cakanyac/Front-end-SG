@@ -9,13 +9,31 @@ import { DataService, DashboardStats, Parcelle } from '../../services/data.servi
   styleUrl: './dashboard.css',
 })
 export class DashboardComponent implements OnInit {
-  stats!: DashboardStats;
-  parcelles!: Parcelle[];
+  stats: DashboardStats | null = null;
+  parcelles: Parcelle[] = [];
+  loading = true;
 
   constructor(private dataService: DataService) {}
 
   ngOnInit(): void {
-    this.stats = this.dataService.getDashboardStats();
-    this.parcelles = this.dataService.getParcelles();
+    this.dataService.getDashboardStats().subscribe({
+      next: (stats) => {
+        this.stats = stats;
+      },
+      error: (err) => {
+        console.error('Error loading dashboard stats:', err);
+      }
+    });
+
+    this.dataService.getParcelles().subscribe({
+      next: (parcelles) => {
+        this.parcelles = parcelles;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading parcelles:', err);
+        this.loading = false;
+      }
+    });
   }
 }

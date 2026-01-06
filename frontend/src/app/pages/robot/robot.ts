@@ -9,12 +9,22 @@ import { DataService, Robot } from '../../services/data.service';
   styleUrl: './robot.css',
 })
 export class RobotComponent implements OnInit {
-  robots!: Robot[];
+  robots: Robot[] = [];
+  loading = true;
 
   constructor(private dataService: DataService) {}
 
   ngOnInit(): void {
-    this.robots = this.dataService.getRobots();
+    this.dataService.getRobots().subscribe({
+      next: (robots) => {
+        this.robots = robots;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading robots:', err);
+        this.loading = false;
+      }
+    });
   }
 
   getStatusColor(statut: string): string {
