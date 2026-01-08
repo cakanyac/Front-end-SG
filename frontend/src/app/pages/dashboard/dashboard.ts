@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataService, DashboardStats, Parcelle } from '../../services/data.service';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -13,12 +14,13 @@ export class DashboardComponent implements OnInit {
   parcelles: Parcelle[] = [];
   loading = true;
 
-  constructor(private dataService: DataService) {}
+  constructor(private dataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.dataService.getDashboardStats().subscribe({
       next: (stats) => {
         this.stats = stats;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading dashboard stats:', err);
@@ -29,6 +31,7 @@ export class DashboardComponent implements OnInit {
       next: (parcelles) => {
         this.parcelles = parcelles;
         this.loading = false;
+         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading parcelles:', err);

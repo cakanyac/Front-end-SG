@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface Parcelle {
   id: string;
@@ -13,20 +14,36 @@ export interface Parcelle {
 }
 
 export interface Capteur {
-  id: number;
-  nom: string;
+  id: string;
+  parcelle_id: string;
   type: string;
-  valeur: number;
-  unite: string;
-  lastUpdate: Date;
+  statut: string;
 }
 
 export interface Robot {
-  id: number;
-  nom: string;
+  id: string;
+  modele: string;
+  type: string;
+  weed_detection_threshold: number;
   statut: 'actif' | 'inactif' | 'en_mission';
-  batterie: number;
-  localisation: string;
+}
+
+export interface Observation {
+  id: string;
+  capteur_id: string;
+  valeur: number;
+  timestamp: string;
+  qualite: string;
+}
+
+export interface Alerte {
+  id: string;
+  parcelle_id: string;
+  type: string;
+  message: string;
+  severite: 'basse' | 'moyenne' | 'haute' | 'critique';
+  lue: boolean;
+  timestamp: string;
 }
 
 export interface DashboardStats {
@@ -73,7 +90,9 @@ export class DataService {
   }
 
   getCapteursByParcelleId(parcelleId: string): Observable<Capteur[]> {
-    return this.http.get<Capteur[]>(`${this.apiUrl}/parcelles/${parcelleId}/capteurs`);
+    return this.http.get<Capteur[]>(`${this.apiUrl}/capteurs`).pipe(
+      map(capteurs => capteurs.filter(c => c.parcelle_id === parcelleId))
+    );
   }
 
   createCapteur(capteur: Omit<Capteur, 'id'>): Observable<Capteur> {
@@ -93,7 +112,7 @@ export class DataService {
     return this.http.get<Robot[]>(`${this.apiUrl}/robots`);
   }
 
-  getRobotById(id: number): Observable<Robot> {
+  getRobotById(id: string): Observable<Robot> {
     return this.http.get<Robot>(`${this.apiUrl}/robots/${id}`);
   }
 
@@ -101,16 +120,11 @@ export class DataService {
     return this.http.post<Robot>(`${this.apiUrl}/robots`, robot);
   }
 
-  updateRobot(id: number, robot: Partial<Robot>): Observable<Robot> {
+  updateRobot(id: string, robot: Partial<Robot>): Observable<Robot> {
     return this.http.put<Robot>(`${this.apiUrl}/robots/${id}`, robot);
   }
 
-  updateRobotStatus(id: number, statut: 'actif' | 'inactif' | 'en_mission', batterie?: number, localisation?: string): Observable<Robot> {
-    const body = { statut, batterie, localisation };
-    return this.http.put<Robot>(`${this.apiUrl}/robots/${id}/statut`, body);
-  }
-
-  deleteRobot(id: number): Observable<void> {
+  deleteRobot(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/robots/${id}`);
   }
 
@@ -118,5 +132,53 @@ export class DataService {
   // Pour l'instant, retourner les stats en comptant les entités
   getDashboardStats(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard/stats`);
+  }
+
+  // OBSERVATIONS
+  getObservations(): Observable<Observation[]> {
+    return this.http.get<Observation[]>(`${this.apiUrl}/observations`);
+  }
+
+  getObservationById(id: string): Observable<Observation> {
+    return this.http.get<Observation>(`${this.apiUrl}/observations/${id}`);
+  }
+
+  getObservationsByCapteurId(capteurId: string): Observable<Observation[]> {
+    return this.http.get<Observation[]>(`${this.apiUrl}/observations`).pipe(
+      map(obs => obs.filter(o => o.capteur_id === capteurId))
+    );
+  }
+
+  createObservation(observation: Omit<Observation, 'id'>): Observable<Observation> {
+    return this.http.post<Observation>(`${this.apiUrl}/observations`, observation);
+  }
+
+  updateObservation(id: string, observation: Partial<Observation>): Observable<Observation> {
+    return this.http.put<Observation>(`${this.apiUrl}/observations/${id}`, observation);
+  }
+
+  deleteObservation(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/observations/${id}`);
+  }
+
+  // ALERTES
+  getAlertes(): Observable<Alerte[]> {
+    return this.http.get<Alerte[]>(`${this.apiUrl}/alertes`);
+  }
+
+  getAlerteById(id: string): Observable<Alerte> {
+    return this.http.get<Alerte>(`${this.apiUrl}/alertes/${id}`);
+  }
+
+  createAlerte(alerte: Omit<Alerte, 'id'>): Observable<Alerte> {
+    return this.http.post<Alerte>(`${this.apiUrl}/alertes`, alerte);
+  }
+
+  markAlerteAsRead(id: string): Observable<Alerte> {
+    return this.http.put<Alerte>(`${this.apiUrl}/alertes/${id}/marquer-lue`, {});
+  }
+
+  deleteAlerte(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/alertes/${id}`);
   }
 }
